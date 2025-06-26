@@ -1,0 +1,752 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login - Autenticação por Emojis</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --bg-primary: #ffffff;
+            --bg-secondary: #f8fafc;
+            --text-primary: #1a202c;
+            --text-secondary: #718096;
+            --border-color: #e2e8f0;
+            --accent-color: #667eea;
+            --accent-hover: #5a67d8;
+            --emoji-bg: #f7fafc;
+            --emoji-selected: #667eea;
+            --shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+        }
+
+        [data-theme="dark"] {
+            --bg-primary: #1a202c;
+            --bg-secondary: #2d3748;
+            --text-primary: #f7fafc;
+            --text-secondary: #a0aec0;
+            --border-color: #4a5568;
+            --emoji-bg: #2d3748;
+            --shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: linear-gradient(135deg, var(--bg-primary) 0%, var(--bg-secondary) 100%);
+            color: var(--text-primary);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s ease;
+        }
+
+        .login-container {
+            background: var(--bg-primary);
+            border-radius: 24px;
+            box-shadow: var(--shadow);
+            padding: 40px;
+            width: 100%;
+            max-width: 420px;
+            border: 1px solid var(--border-color);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .login-container::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, #667eea, #764ba2, #f093fb);
+        }
+
+        .theme-toggle {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: var(--emoji-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 18px;
+        }
+
+        .theme-toggle:hover {
+            transform: scale(1.1);
+        }
+
+        .logo {
+            text-align: center;
+            margin-bottom: 32px;
+        }
+
+        .logo-icon {
+            width: 64px;
+            height: 64px;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            border-radius: 16px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 28px;
+            margin-bottom: 16px;
+            animation: float 3s ease-in-out infinite;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-10px); }
+        }
+
+        .logo h1 {
+            font-size: 24px;
+            font-weight: 700;
+            margin-bottom: 4px;
+        }
+
+        .logo p {
+            color: var(--text-secondary);
+            font-size: 14px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 500;
+            font-size: 14px;
+        }
+
+        .input-wrapper {
+            position: relative;
+        }
+
+        .form-input {
+            width: 100%;
+            padding: 16px;
+            border: 2px solid var(--border-color);
+            border-radius: 12px;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            font-size: 16px;
+            transition: all 0.3s ease;
+        }
+
+        .form-input:focus {
+            outline: none;
+            border-color: var(--accent-color);
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .password-toggle {
+            position: absolute;
+            right: 16px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: none;
+            border: none;
+            cursor: pointer;
+            font-size: 18px;
+            color: var(--text-secondary);
+            transition: all 0.3s ease;
+        }
+
+        .password-toggle:hover {
+            color: var(--accent-color);
+            transform: translateY(-50%) scale(1.1);
+        }
+
+        .emoji-section {
+            margin: 32px 0;
+        }
+
+        .emoji-section h3 {
+            font-size: 16px;
+            font-weight: 600;
+            margin-bottom: 16px;
+            text-align: center;
+        }
+
+        .emoji-instruction {
+            text-align: center;
+            color: var(--text-secondary);
+            font-size: 12px;
+            margin-bottom: 16px;
+        }
+
+        .emoji-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 12px;
+            margin-bottom: 16px;
+        }
+
+        .emoji-btn {
+            aspect-ratio: 1;
+            border: 2px solid var(--border-color);
+            border-radius: 16px;
+            background: var(--emoji-bg);
+            font-size: 24px;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .emoji-btn::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+            transition: left 0.5s;
+        }
+
+        .emoji-btn:hover::before {
+            left: 100%;
+        }
+
+        .emoji-btn:hover {
+            transform: scale(1.05);
+            border-color: var(--accent-color);
+        }
+
+        .emoji-btn.selected {
+            border-color: var(--emoji-selected);
+            background: var(--emoji-selected);
+            color: white;
+            transform: scale(1.1);
+            animation: pulse 0.6s ease-out;
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(1.1); box-shadow: 0 0 0 0 rgba(102, 126, 234, 0.7); }
+            70% { transform: scale(1.15); box-shadow: 0 0 0 10px rgba(102, 126, 234, 0); }
+            100% { transform: scale(1.1); box-shadow: 0 0 0 0 rgba(102, 126, 234, 0); }
+        }
+
+        .selected-count {
+            text-align: center;
+            font-size: 12px;
+            color: var(--text-secondary);
+            margin-bottom: 20px;
+        }
+
+        .login-btn {
+            width: 100%;
+            padding: 16px;
+            background: var(--accent-color);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .login-btn:disabled {
+            background: var(--text-secondary);
+            cursor: not-allowed;
+            opacity: 0.6;
+        }
+
+        .login-btn:not(:disabled):hover {
+            background: var(--accent-hover);
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(102, 126, 234, 0.3);
+        }
+
+        .login-btn:not(:disabled):active {
+            transform: translateY(0);
+        }
+
+        .footer {
+            text-align: center;
+            margin-top: 32px;
+            padding-top: 20px;
+            border-top: 1px solid var(--border-color);
+            color: var(--text-secondary);
+            font-size: 12px;
+        }
+
+        .loading {
+            display: none;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+        }
+
+        .spinner {
+            width: 20px;
+            height: 20px;
+            border: 2px solid rgba(255,255,255,0.3);
+            border-radius: 50%;
+            border-top-color: white;
+            animation: spin 1s ease-in-out infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            10%, 30%, 50%, 70%, 90% { transform: translateX(-5px); }
+            20%, 40%, 60%, 80% { transform: translateX(5px); }
+        }
+
+        @media (max-width: 480px) {
+            .login-container {
+                margin: 20px;
+                padding: 30px 24px;
+            }
+            
+            .emoji-btn {
+                font-size: 20px;
+            }
+        }
+    </style>
+</head>
+<body data-theme="light">
+    <div class="login-container">
+        <button class="theme-toggle" onclick="toggleTheme()">🌙</button>
+        
+        <div class="logo">
+            <div class="logo-icon">🔐</div>
+            <h1>SecureLogin</h1>
+            <p>Autenticação por Emojis</p>
+        </div>
+
+        <form id="loginForm">
+            <div class="form-group">
+                <label for="email">E-mail</label>
+                <input type="email" id="email" class="form-input" placeholder="seu@email.com" required>
+            </div>
+
+            <div class="form-group">
+                <label for="password">Senha</label>
+                <div class="input-wrapper">
+                    <input type="password" id="password" class="form-input" placeholder="••••••••" required>
+                    <button type="button" class="password-toggle" onclick="togglePassword()">👁️</button>
+                </div>
+            </div>
+
+            <div class="emoji-section">
+                <h3>Selecione 3 emojis na sequência</h3>
+                <p class="emoji-instruction">Escolha seus emojis de segurança</p>
+                <div style="text-align: center; margin-bottom: 12px;">
+                    <small style="color: var(--text-secondary); background: var(--emoji-bg); padding: 4px 8px; border-radius: 12px; font-size: 11px;">
+                        💡 Dica: A sequência correta é ⭐🔥💎
+                    </small>
+                </div>
+                
+                <div class="emoji-grid">
+                    <button type="button" class="emoji-btn" data-emoji="😊">😊</button>
+                    <button type="button" class="emoji-btn" data-emoji="🚀">🚀</button>
+                    <button type="button" class="emoji-btn" data-emoji="🎵">🎵</button>
+                    <button type="button" class="emoji-btn" data-emoji="🌟">🌟</button>
+                    <button type="button" class="emoji-btn" data-emoji="🎯">🎯</button>
+                    <button type="button" class="emoji-btn" data-emoji="💎">💎</button>
+                    <button type="button" class="emoji-btn" data-emoji="🔥">🔥</button>
+                    <button type="button" class="emoji-btn" data-emoji="⚡">⚡</button>
+                    <button type="button" class="emoji-btn" data-emoji="🌈">🌈</button>
+                </div>
+                
+                <div class="selected-count">
+                    <span id="emojiCount">0/3 emojis selecionados</span>
+                </div>
+            </div>
+
+            <button type="submit" class="login-btn" id="loginBtn" disabled>
+                <span class="btn-text">Entrar</span>
+                <div class="loading">
+                    <div class="spinner"></div>
+                </div>
+            </button>
+        </form>
+
+        <div class="footer">
+            © IHC - AC 26.06.2025
+        </div>
+    </div>
+
+    <script>
+        let selectedEmojis = [];
+        let isDark = false;
+
+        // Theme toggle
+        function toggleTheme() {
+            isDark = !isDark;
+            document.body.setAttribute('data-theme', isDark ? 'dark' : 'light');
+            document.querySelector('.theme-toggle').textContent = isDark ? '☀️' : '🌙';
+        }
+
+        // Password visibility toggle
+        function togglePassword() {
+            const passwordInput = document.getElementById('password');
+            const toggleBtn = document.querySelector('.password-toggle');
+            
+            if (passwordInput.type === 'password') {
+                passwordInput.type = 'text';
+                toggleBtn.textContent = '🙈';
+            } else {
+                passwordInput.type = 'password';
+                toggleBtn.textContent = '👁️';
+            }
+        }
+
+        // Emoji selection
+        document.querySelectorAll('.emoji-btn').forEach(btn => {
+            btn.addEventListener('click', function() {
+                const emoji = this.dataset.emoji;
+                
+                if (this.classList.contains('selected')) {
+                    // Remove emoji
+                    this.classList.remove('selected');
+                    selectedEmojis = selectedEmojis.filter(e => e !== emoji);
+                } else if (selectedEmojis.length < 3) {
+                    // Add emoji
+                    this.classList.add('selected');
+                    selectedEmojis.push(emoji);
+                }
+                
+                updateEmojiCount();
+                updateLoginButton();
+            });
+        });
+
+        function updateEmojiCount() {
+            const countElement = document.getElementById('emojiCount');
+            countElement.textContent = `${selectedEmojis.length}/3 emojis selecionados`;
+            
+            if (selectedEmojis.length === 3) {
+                countElement.style.color = 'var(--accent-color)';
+                countElement.style.fontWeight = '600';
+            } else {
+                countElement.style.color = 'var(--text-secondary)';
+                countElement.style.fontWeight = 'normal';
+            }
+        }
+
+        function updateLoginButton() {
+            const loginBtn = document.getElementById('loginBtn');
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+            
+            if (email && password && selectedEmojis.length === 3) {
+                loginBtn.disabled = false;
+                loginBtn.style.background = 'var(--accent-color)';
+            } else {
+                loginBtn.disabled = true;
+                loginBtn.style.background = 'var(--text-secondary)';
+            }
+        }
+
+        // Update login button on input changes
+        document.getElementById('email').addEventListener('input', updateLoginButton);
+        document.getElementById('password').addEventListener('input', updateLoginButton);
+
+        // Define the correct emoji sequence (user must select these 3 in this exact order)
+        const CORRECT_EMOJI_SEQUENCE = ['🌟', '🔥', '💎'];
+        
+        // Form submission
+        document.getElementById('loginForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const loginBtn = document.getElementById('loginBtn');
+            const btnText = loginBtn.querySelector('.btn-text');
+            const loading = loginBtn.querySelector('.loading');
+            const email = document.getElementById('email').value;
+            
+            // Show loading
+            btnText.style.display = 'none';
+            loading.style.display = 'block';
+            loginBtn.disabled = true;
+            
+            // Simulate login process
+            setTimeout(() => {
+                // Validate emoji sequence
+                const isValidSequence = JSON.stringify(selectedEmojis) === JSON.stringify(CORRECT_EMOJI_SEQUENCE);
+                
+                if (isValidSequence) {
+                    // Success - redirect to dashboard
+                    showDashboard(email);
+                } else {
+                    // Error - wrong emoji sequence
+                    showError();
+                    
+                    // Reset form
+                    btnText.style.display = 'block';
+                    loading.style.display = 'none';
+                    document.querySelectorAll('.emoji-btn').forEach(btn => btn.classList.remove('selected'));
+                    selectedEmojis = [];
+                    updateEmojiCount();
+                    updateLoginButton();
+                }
+            }, 2000);
+        });
+        
+        function showError() {
+            const container = document.querySelector('.login-container');
+            container.style.animation = 'shake 0.5s ease-in-out';
+            
+            // Show error message
+            const errorDiv = document.createElement('div');
+            errorDiv.className = 'error-message';
+            errorDiv.innerHTML = `
+                <div style="
+                    background: #fed7d7;
+                    color: #c53030;
+                    padding: 12px 16px;
+                    border-radius: 8px;
+                    margin: 16px 0;
+                    font-size: 14px;
+                    text-align: center;
+                    border: 1px solid #feb2b2;
+                ">
+                    ❌ Sequência de emojis incorreta! Tente novamente.<br>
+                    <small>Dica: A sequência correta é ⭐🔥💎</small>
+                </div>
+            `;
+            
+            const emojiSection = document.querySelector('.emoji-section');
+            emojiSection.appendChild(errorDiv);
+            
+            // Remove error message after 5 seconds
+            setTimeout(() => {
+                if (errorDiv.parentNode) {
+                    errorDiv.remove();
+                }
+                container.style.animation = '';
+            }, 5000);
+        }
+        
+        function showDashboard(userEmail) {
+            document.body.innerHTML = `
+                <style>
+                    .dashboard {
+                        min-height: 100vh;
+                        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                        display: flex;
+                        align-items: center;
+                        justify-content: center;
+                        font-family: 'Inter', sans-serif;
+                        padding: 20px;
+                    }
+                    
+                    .dashboard-card {
+                        background: white;
+                        border-radius: 24px;
+                        padding: 40px;
+                        box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+                        text-align: center;
+                        max-width: 500px;
+                        width: 100%;
+                        animation: slideIn 0.6s ease-out;
+                    }
+                    
+                    @keyframes slideIn {
+                        from {
+                            opacity: 0;
+                            transform: translateY(30px);
+                        }
+                        to {
+                            opacity: 1;
+                            transform: translateY(0);
+                        }
+                    }
+                    
+                    .success-icon {
+                        width: 80px;
+                        height: 80px;
+                        background: linear-gradient(135deg, #48bb78, #38a169);
+                        border-radius: 50%;
+                        display: inline-flex;
+                        align-items: center;
+                        justify-content: center;
+                        font-size: 36px;
+                        margin-bottom: 24px;
+                        animation: bounce 1s ease-in-out;
+                    }
+                    
+                    @keyframes bounce {
+                        0%, 20%, 50%, 80%, 100% {
+                            transform: translateY(0);
+                        }
+                        40% {
+                            transform: translateY(-10px);
+                        }
+                        60% {
+                            transform: translateY(-5px);
+                        }
+                    }
+                    
+                    .dashboard h1 {
+                        color: #2d3748;
+                        font-size: 28px;
+                        margin-bottom: 16px;
+                        font-weight: 700;
+                    }
+                    
+                    .dashboard p {
+                        color: #718096;
+                        font-size: 16px;
+                        margin-bottom: 32px;
+                        line-height: 1.6;
+                    }
+                    
+                    .user-info {
+                        background: #f7fafc;
+                        border-radius: 12px;
+                        padding: 20px;
+                        margin-bottom: 32px;
+                        border-left: 4px solid #667eea;
+                    }
+                    
+                    .user-info h3 {
+                        color: #2d3748;
+                        font-size: 18px;
+                        margin-bottom: 8px;
+                    }
+                    
+                    .user-info p {
+                        color: #4a5568;
+                        margin: 4px 0;
+                    }
+                    
+                    .stats-grid {
+                        display: grid;
+                        grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+                        gap: 16px;
+                        margin-bottom: 32px;
+                    }
+                    
+                    .stat-card {
+                        background: linear-gradient(135deg, #667eea, #764ba2);
+                        color: white;
+                        padding: 20px;
+                        border-radius: 12px;
+                        text-align: center;
+                    }
+                    
+                    .stat-number {
+                        font-size: 24px;
+                        font-weight: 700;
+                        margin-bottom: 4px;
+                    }
+                    
+                    .stat-label {
+                        font-size: 12px;
+                        opacity: 0.9;
+                    }
+                    
+                    .logout-btn {
+                        background: #e53e3e;
+                        color: white;
+                        border: none;
+                        padding: 12px 24px;
+                        border-radius: 8px;
+                        cursor: pointer;
+                        font-size: 14px;
+                        font-weight: 600;
+                        transition: all 0.3s ease;
+                    }
+                    
+                    .logout-btn:hover {
+                        background: #c53030;
+                        transform: translateY(-2px);
+                    }
+                    
+                    .security-badge {
+                        display: inline-flex;
+                        align-items: center;
+                        background: #c6f6d5;
+                        color: #22543d;
+                        padding: 8px 12px;
+                        border-radius: 20px;
+                        font-size: 12px;
+                        font-weight: 600;
+                        margin-top: 16px;
+                    }
+                    
+                    @media (max-width: 480px) {
+                        .dashboard-card {
+                            padding: 30px 20px;
+                        }
+                        
+                        .stats-grid {
+                            grid-template-columns: repeat(2, 1fr);
+                        }
+                    }
+                </style>
+                
+                <div class="dashboard">
+                    <div class="dashboard-card">
+                        <div class="success-icon">✅</div>
+                        
+                        <h1>Bem-vindo ao Dashboard!</h1>
+                        <p>Login realizado com sucesso usando autenticação por emojis.</p>
+                        
+                        <div class="user-info">
+                            <h3>👤 Informações do Usuário</h3>
+                            <p><strong>E-mail:</strong> ${userEmail}</p>
+                            <p><strong>Último acesso:</strong> ${new Date().toLocaleString('pt-BR')}</p>
+                            <p><strong>Sequência de emojis:</strong> ${CORRECT_EMOJI_SEQUENCE.join(' ')}</p>
+                            <div class="security-badge">
+                                🔒 Autenticação Segura Ativada
+                            </div>
+                        </div>
+                        
+                        <div class="stats-grid">
+                            <div class="stat-card">
+                                <div class="stat-number">42</div>
+                                <div class="stat-label">PROJETOS</div>
+                            </div>
+                            <div class="stat-card">
+                                <div class="stat-number">128</div>
+                                <div class="stat-label">TAREFAS</div>
+                            </div>
+                            <div class="stat-card">
+                                <div class="stat-number">96%</div>
+                                <div class="stat-label">PROGRESSO</div>
+                            </div>
+                        </div>
+                        
+                        <button class="logout-btn" onclick="location.reload()">
+                            🚪 Fazer Logout
+                        </button>
+                        
+                        <div style="margin-top: 20px; padding-top: 20px; border-top: 1px solid #e2e8f0; color: #718096; font-size: 12px;">
+                            © IHC - AC 26.06.2025
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        // Initialize
+        updateLoginButton();
+    </script>
+</body>
+</html>
